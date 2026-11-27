@@ -230,6 +230,7 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
           const evalResult = evaluateToolResponse(msg.result, options.config, origin.toolName);
           let outboundMessage: unknown = msg;
           let redactedCount = 0;
+          let recordedPayload: unknown = msg.result;
 
           if (evalResult.decision === 'block') {
             const firstSummary = evalResult.findings[0]?.summary ?? 'Response violated security policy';
@@ -238,9 +239,15 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
               direction: 'server->client',
               findings: evalResult.findings,
             });
+            if (options.config.redactResponses && evalResult.findings.some((f) => f.category === 'secret_leak')) {
+              const { value, count } = redactSecretsInValue(msg.result);
+              redactedCount = count;
+              recordedPayload = value;
+            }
           } else if (options.config.redactResponses && evalResult.findings.some((f) => f.category === 'secret_leak')) {
             const { value, count } = redactSecretsInValue(msg.result);
             redactedCount = count;
+            recordedPayload = value;
             outboundMessage = {
               jsonrpc: '2.0',
               id: msg.id,
@@ -258,7 +265,7 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
             method: origin.method,
             toolName: origin.toolName,
             findings: evalResult.findings,
-            payload: msg.result,
+            payload: recordedPayload,
           };
           if (latencyMs !== undefined) event.latencyMs = latencyMs;
           if (redactedCount > 0) event.redactedSecrets = redactedCount;
