@@ -57,6 +57,28 @@ const SECRET_PATTERNS: readonly SecretPattern[] = [
     regex: /\b(?:sk|rk)_live_[0-9A-Za-z]{20,99}\b/g,
   },
   {
+    ruleId: 'secret.huggingface_token',
+    label: 'Hugging Face access token',
+    regex: /\bhf_[A-Za-z0-9]{24,64}\b/g,
+  },
+  {
+    ruleId: 'secret.npm_token',
+    label: 'npm access token',
+    regex: /\bnpm_[A-Za-z0-9]{30,64}\b/g,
+  },
+  {
+    ruleId: 'secret.pypi_token',
+    label: 'PyPI API token',
+    regex: /\bpypi-[A-Za-z0-9_-]{32,180}\b/g,
+  },
+  {
+    ruleId: 'secret.database_url_creds',
+    label: 'Database connection URL password',
+    regex: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|rediss?):\/\/[^:\s/@]{1,64}:([^@\s/]{12,128})@[^\s/]{1,128}/gi,
+    captureGroup: 1,
+    minEntropy: 3.3,
+  },
+  {
     ruleId: 'secret.high_entropy_assignment',
     label: 'High-entropy credential assignment',
     regex: /\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|secret[_-]?key|password)\s{0,4}[:=]\s{0,4}["']?([A-Za-z0-9/+_.-]{20,128})["']?/gi,
