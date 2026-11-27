@@ -21,6 +21,17 @@ export {
   type SecretMatch,
 } from './policy/secrets.js';
 export {
+  canonicalizeJson,
+  generatePolicyKeyPair,
+  PolicySignatureError,
+  signPolicyConfig,
+  verifySignedPolicyBundle,
+  type PolicyKeyPair,
+  type SignedPolicyBundle,
+  type SignPolicyOptions,
+  type VerifyPolicyOptions,
+} from './policy/signature.js';
+export {
   SEVERITY_RANK,
   compareSeverity,
   maxSeverity,
