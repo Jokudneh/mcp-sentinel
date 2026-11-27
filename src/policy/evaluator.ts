@@ -220,9 +220,20 @@ function looksLikePathValue(leaf: StringLeaf): boolean {
     val.startsWith('/') ||
     val.startsWith('./') ||
     val.startsWith('../') ||
+    val.startsWith('..\\') ||
     /^[a-zA-Z]:[\\/]/.test(val) ||
-    /(?:^|[\\/])\.(?:env|ssh|aws|kube|npmrc)\b/i.test(val)
+    /(?:^|[\\/])\.(?:env|ssh|aws|kube|npmrc)\b/i.test(val) ||
+    /%2e%2e(?:%2f|%5c|[\\/])/i.test(val)
   );
+}
+
+function tryDecodeUriComponent(raw: string): string {
+  if (!raw.includes('%')) return raw;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
 }
 
 function decide(findings: readonly RuleFinding[], config: SentinelConfig): EvaluationResult {
@@ -305,10 +316,23 @@ export function evaluateToolCall(
 
     if (looksLikePathValue(leaf)) {
       const trimmed = leaf.value.trim();
-      const normalized = normalize(trimmed);
+      const decoded = tryDecodeUriComponent(trimmed);
+      const normalized = normalize(decoded);
+      const posixNormalized = decoded.replace(/\\/g, '/');
+
+      if (trimmed.includes('\0') || decoded.includes('\0')) {
+        findings.push({
+          ruleId: 'path.null_byte',
+          category: 'path_violation',
+          severity: 'critical',
+          summary: 'Null byte detected inside path argument',
+          path: leaf.path,
+          matchPreview: trimmed.replace(/\0/g, '\\0').slice(0, 80),
+        });
+      }
 
       for (const rule of SENSITIVE_PATH_RULES) {
-        if (rule.regex.test(trimmed) || rule.regex.test(normalized)) {
+        if (rule.regex.test(trimmed) || rule.regex.test(decoded) || rule.regex.test(normalized) || rule.regex.test(posixNormalized)) {
           findings.push({
             ruleId: rule.ruleId,
             category: 'path_violation',
@@ -320,7 +344,10 @@ export function evaluateToolCall(
         }
       }
 
-      if (trimmed.includes('..') && (normalized.startsWith('..') || /(?:^|[\\/])\.\.(?:[\\/]|$)/.test(trimmed))) {
+      if (
+        (decoded.includes('..') || trimmed.includes('..')) &&
+        (normalized.startsWith('..') || /(?:^|[\\/])\.\.(?:[\\/]|$)/.test(decoded))
+      ) {
         findings.push({
           ruleId: 'path.traversal',
           category: 'path_violation',
@@ -331,7 +358,7 @@ export function evaluateToolCall(
         });
       }
 
-      if (config.allowedRoots.length > 0 && !isWithinAllowedRoots(trimmed, config.allowedRoots)) {
+      if (config.allowedRoots.length > 0 && !isWithinAllowedRoots(decoded, config.allowedRoots)) {
         findings.push({
           ruleId: 'path.outside_allowed_roots',
           category: 'path_violation',

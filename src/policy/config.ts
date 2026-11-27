@@ -20,6 +20,11 @@ export const DEFAULT_CONFIG: Readonly<SentinelConfig> = {
   detectDestructiveCommands: true,
   detectPromptInjection: true,
   maxPayloadBytes: 4 * 1024 * 1024,
+  loopProtection: {
+    enabled: true,
+    maxRepeatedCalls: 8,
+    windowMs: 30_000,
+  },
 };
 
 const VALID_MODES = new Set<EnforcementMode>(['enforce', 'audit']);
@@ -50,6 +55,7 @@ export function validateConfig(raw: unknown): SentinelConfig {
     allowedTools: [...DEFAULT_CONFIG.allowedTools],
     deniedTools: [...DEFAULT_CONFIG.deniedTools],
     allowedRoots: [...DEFAULT_CONFIG.allowedRoots],
+    loopProtection: { ...DEFAULT_CONFIG.loopProtection },
   };
 
   if ('mode' in input) {
@@ -99,6 +105,31 @@ export function validateConfig(raw: unknown): SentinelConfig {
       throw new ConfigError('Config field "maxPayloadBytes" must be an integer between 1024 and 67108864');
     }
     config.maxPayloadBytes = val;
+  }
+
+  if ('loopProtection' in input) {
+    const lp = input['loopProtection'];
+    if (typeof lp !== 'object' || lp === null || Array.isArray(lp)) {
+      throw new ConfigError('Config field "loopProtection" must be an object');
+    }
+    const lpObj = lp as Record<string, unknown>;
+    if ('enabled' in lpObj) {
+      config.loopProtection.enabled = assertBoolean(lpObj['enabled'], 'loopProtection.enabled');
+    }
+    if ('maxRepeatedCalls' in lpObj) {
+      const val = lpObj['maxRepeatedCalls'];
+      if (typeof val !== 'number' || !Number.isInteger(val) || val < 2 || val > 10_000) {
+        throw new ConfigError('Config field "loopProtection.maxRepeatedCalls" must be an integer between 2 and 10000');
+      }
+      config.loopProtection.maxRepeatedCalls = val;
+    }
+    if ('windowMs' in lpObj) {
+      const val = lpObj['windowMs'];
+      if (typeof val !== 'number' || !Number.isInteger(val) || val < 1_000 || val > 3_600_000) {
+        throw new ConfigError('Config field "loopProtection.windowMs" must be an integer between 1000 and 3600000');
+      }
+      config.loopProtection.windowMs = val;
+    }
   }
 
   return config;

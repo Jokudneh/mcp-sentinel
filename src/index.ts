@@ -1,3 +1,4 @@
+export { CallLoopBreaker, fingerprintToolCall } from './policy/circuit-breaker.js';
 export {
   ConfigError,
   DEFAULT_CONFIG,
@@ -20,6 +21,7 @@ export {
   type EnforcementMode,
   type EvaluationResult,
   type FindingCategory,
+  type LoopProtectionConfig,
   type PolicyDecision,
   type RuleFinding,
   type SentinelConfig,

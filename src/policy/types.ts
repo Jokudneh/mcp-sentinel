@@ -7,7 +7,8 @@ export type FindingCategory =
   | 'secret_leak'
   | 'destructive_command'
   | 'path_violation'
-  | 'prompt_injection';
+  | 'prompt_injection'
+  | 'rate_limit';
 
 export type PolicyDecision = 'allow' | 'warn' | 'block';
 
@@ -26,6 +27,12 @@ export interface EvaluationResult {
   findings: RuleFinding[];
 }
 
+export interface LoopProtectionConfig {
+  enabled: boolean;
+  maxRepeatedCalls: number;
+  windowMs: number;
+}
+
 export interface SentinelConfig {
   mode: EnforcementMode;
   blockOnSeverity: Severity;
@@ -37,6 +44,7 @@ export interface SentinelConfig {
   detectDestructiveCommands: boolean;
   detectPromptInjection: boolean;
   maxPayloadBytes: number;
+  loopProtection: LoopProtectionConfig;
 }
 
 export const SEVERITY_RANK: Readonly<Record<Severity, number>> = {

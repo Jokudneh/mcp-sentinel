@@ -62,6 +62,7 @@ function buildConfig(flags: {
         allowedTools: [...DEFAULT_CONFIG.allowedTools],
         deniedTools: [...DEFAULT_CONFIG.deniedTools],
         allowedRoots: [...DEFAULT_CONFIG.allowedRoots],
+        loopProtection: { ...DEFAULT_CONFIG.loopProtection },
       };
 
   if (flags.mode !== undefined) {

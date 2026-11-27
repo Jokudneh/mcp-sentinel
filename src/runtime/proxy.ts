@@ -1,9 +1,10 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import type { Readable, Writable } from 'node:stream';
+import { CallLoopBreaker } from '../policy/circuit-breaker.js';
 import { evaluateToolCall, evaluateToolResponse } from '../policy/evaluator.js';
 import { redactSecretsInValue } from '../policy/secrets.js';
-import type { SentinelConfig } from '../policy/types.js';
+import { SEVERITY_RANK, maxSeverity, type SentinelConfig } from '../policy/types.js';
 import { encodeFrame, MessageFramer, type FramingMode } from '../protocol/framing.js';
 import {
   createBlockedErrorResponse,
@@ -54,6 +55,7 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
 
   const clientFramer = new MessageFramer(options.config.maxPayloadBytes);
   const serverFramer = new MessageFramer(options.config.maxPayloadBytes);
+  const loopBreaker = new CallLoopBreaker(options.config.loopProtection);
   const pending = new Map<string, PendingRequest>();
 
   const child: ChildProcess = spawn(options.command, options.args, {
@@ -120,6 +122,20 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
 
         if (toolCall) {
           const evalResult = evaluateToolCall(toolCall.name, toolCall.arguments, options.config);
+          const loopFinding = loopBreaker.recordAndCheck(toolCall.name, toolCall.arguments);
+          if (loopFinding) {
+            evalResult.findings.push(loopFinding);
+            evalResult.highestSeverity = maxSeverity(evalResult.findings);
+            if (
+              options.config.mode === 'enforce' &&
+              evalResult.highestSeverity !== null &&
+              SEVERITY_RANK[evalResult.highestSeverity] >= SEVERITY_RANK[options.config.blockOnSeverity]
+            ) {
+              evalResult.decision = 'block';
+            } else if (evalResult.decision === 'allow') {
+              evalResult.decision = 'warn';
+            }
+          }
           const event: TraceEvent = {
             timestamp,
             sessionId,
