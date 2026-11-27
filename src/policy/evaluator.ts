@@ -1,4 +1,5 @@
-import { isAbsolute, normalize, relative, resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { dirname, isAbsolute, join, normalize, relative, resolve } from 'node:path';
 import { evaluateCustomRulesForLeaf } from './custom-rules.js';
 import { scanSecrets } from './secrets.js';
 import {
@@ -202,10 +203,31 @@ export function matchesToolPattern(toolName: string, pattern: string): boolean {
   return true;
 }
 
+function resolveRealPathBestEffort(targetPath: string): string {
+  const absolute = resolve(targetPath);
+  let current = absolute;
+  const tail: string[] = [];
+
+  while (true) {
+    try {
+      const real = realpathSync(current);
+      return tail.length === 0 ? real : join(real, ...tail.reverse());
+    } catch {
+      const parent = dirname(current);
+      if (parent === current) {
+        return absolute;
+      }
+      tail.push(relative(parent, current));
+      current = parent;
+    }
+  }
+}
+
 function isWithinAllowedRoots(candidatePath: string, allowedRoots: readonly string[]): boolean {
-  const resolvedCandidate = resolve(candidatePath);
+  const resolvedCandidate = resolveRealPathBestEffort(candidatePath);
   for (const root of allowedRoots) {
-    const rel = relative(root, resolvedCandidate);
+    const resolvedRoot = resolveRealPathBestEffort(root);
+    const rel = relative(resolvedRoot, resolvedCandidate);
     if (rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))) {
       return true;
     }
@@ -224,17 +246,23 @@ function looksLikePathValue(leaf: StringLeaf): boolean {
     val.startsWith('..\\') ||
     /^[a-zA-Z]:[\\/]/.test(val) ||
     /(?:^|[\\/])\.(?:env|ssh|aws|kube|npmrc)\b/i.test(val) ||
-    /%2e%2e(?:%2f|%5c|[\\/])/i.test(val)
+    /%(?:25)?2e%(?:25)?2e(?:%(?:25)?2f|%(?:25)?5c|[\\/])/i.test(val)
   );
 }
 
 function tryDecodeUriComponent(raw: string): string {
-  if (!raw.includes('%')) return raw;
-  try {
-    return decodeURIComponent(raw);
-  } catch {
-    return raw;
+  let current = raw;
+  for (let pass = 0; pass < 2; pass += 1) {
+    if (!current.includes('%')) break;
+    try {
+      const next = decodeURIComponent(current);
+      if (next === current) break;
+      current = next;
+    } catch {
+      break;
+    }
   }
+  return current;
 }
 
 function decide(findings: readonly RuleFinding[], config: SentinelConfig): EvaluationResult {
