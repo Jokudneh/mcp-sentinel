@@ -1,0 +1,30 @@
+{
+  "mode": "enforce",
+  "blockOnSeverity": "high",
+  "redactResponses": true,
+  "allowedTools": [],
+  "deniedTools": [
+    "*_destroy",
+    "drop_*"
+  ],
+  "allowedRoots": [],
+  "detectSecrets": true,
+  "detectDestructiveCommands": true,
+  "detectPromptInjection": true,
+  "maxPayloadBytes": 4194304,
+  "loopProtection": {
+    "enabled": true,
+    "maxRepeatedCalls": 8,
+    "windowMs": 30000
+  },
+  "customRules": [
+    {
+      "id": "custom.no_prod_db_host",
+      "direction": "request",
+      "severity": "critical",
+      "summary": "Block direct connections to production database hostnames",
+      "match": "contains",
+      "pattern": "prod-db.internal"
+    }
+  ]
+}

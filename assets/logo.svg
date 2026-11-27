@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="mcp-sentinel logo">
+  <defs>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="120" height="120" rx="24" fill="#0D1117" stroke="#30363D" stroke-width="2" />
+  <path d="M64 24 L98 37 V65 C98 85 83 99.5 64 106 C45 99.5 30 85 30 65 V37 Z"
+        fill="#161B22" stroke="url(#accent)" stroke-width="3.2" stroke-linejoin="round" />
+  <path d="M49 56 L59 64 L49 72" fill="none" stroke="#F0F6FC" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="65" y1="72" x2="79" y2="72" stroke="#10B981" stroke-width="3.4" stroke-linecap="round" />
+  <circle cx="99" cy="29" r="6" fill="#10B981" />
+</svg>

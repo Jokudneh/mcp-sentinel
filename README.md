@@ -260,10 +260,10 @@ mcp-sentinel proxy [options] -- <server-cmd> [server-args...]
 | `-q, --quiet` | `false` | Suppress live telemetry lines on `stderr` |
 
 ### `mcp-sentinel inspect`
-Analyze a recorded JSONL trace file in the terminal or emit machine-readable JSON.
+Analyze a recorded JSONL trace file in the terminal or export structured reports (`json`, `markdown`, or **SARIF 2.1.0** for GitHub Code Scanning).
 
 ```bash
-mcp-sentinel inspect <trace.jsonl> [--tool <name>] [--severity <level>] [--only-findings] [--json]
+mcp-sentinel inspect <trace.jsonl> [--tool <name>] [--severity <level>] [--only-findings] [--format text|json|markdown|sarif]
 ```
 
 | Flag | Description |
@@ -271,7 +271,8 @@ mcp-sentinel inspect <trace.jsonl> [--tool <name>] [--severity <level>] [--only-
 | `--tool <name>` | Filter events to a specific MCP tool name |
 | `--severity <low\|medium\|high\|critical>` | Include only events with at least one finding at or above this severity |
 | `--only-findings` | Hide clean events and show only flagged traffic |
-| `--json` | Output structured JSON summary for scripts/CI |
+| `-f, --format <fmt>` | Output format: `text` (default), `json`, `markdown`, or `sarif` (SARIF 2.1.0) |
+| `--json` | Shorthand alias for `--format json` |
 
 ### `mcp-sentinel check`
 Dry-run a JSON-RPC `tools/call` request, shorthand `{ "name", "arguments" }`, or tool response JSON file against active policies. Exits `1` when blocked and `0` when allowed or warned.
@@ -346,9 +347,12 @@ Generated via `mcp-sentinel init` (`sentinel.config.json`):
     "enabled": true,
     "maxRepeatedCalls": 8,
     "windowMs": 30000
-  }
+  },
+  "customRules": []
 }
 ```
+
+See [sentinel.config.example.json](./sentinel.config.example.json) for a full example including custom declarative rules.
 
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -363,6 +367,7 @@ Generated via `mcp-sentinel init` (`sentinel.config.json`):
 | `detectPromptInjection` | `boolean` | `true` | Enable indirect prompt-injection inspection on tool responses |
 | `maxPayloadBytes` | `number` | `4194304` | Maximum single frame size in bytes (`1024`–`67108864`) |
 | `loopProtection` | `{ enabled, maxRepeatedCalls, windowMs }` | `{ true, 8, 30000 }` | Sliding-window circuit breaker stopping runaway identical tool-call loops |
+| `customRules` | `CustomRuleConfig[]` | `[]` | User-defined `contains`, `prefix`, or ReDoS-validated `regex` rules scoped by `direction` and optional `toolPattern` |
 
 > CLI flags (`--mode`, `--allow-root`, `--allow-tool`, `--deny-tool`) merge on top of `--config` so you can share a base team policy file and override per-project roots on the command line.
 
@@ -459,7 +464,8 @@ mcp-sentinel/
 │   └── workflows/
 │       └── ci.yml              # Matrix CI across Node 20, 22, and 24
 ├── assets/
-│   └── banner.svg              # Compact vector hero banner
+│   ├── banner.svg              # Compact vector hero banner
+│   └── logo.svg                # Matching 128x128 vector emblem
 ├── src/
 │   ├── protocol/
 │   │   ├── jsonrpc.ts          # Strict JSON-RPC 2.0 & MCP types + error builders
@@ -468,10 +474,12 @@ mcp-sentinel/
 │   │   ├── types.ts            # Config, severity ranking, and finding types
 │   │   ├── config.ts           # Defaults & runtime schema validation
 │   │   ├── circuit-breaker.ts  # Sliding-window canonicalized call-loop breaker
+│   │   ├── custom-rules.ts     # Declarative user rules with ReDoS safety validator
 │   │   ├── secrets.ts          # Linear-time patterns, Shannon entropy, deep redaction
 │   │   └── evaluator.ts        # Outbound/inbound policy engine & path boundary checks
 │   ├── runtime/
 │   │   ├── tracer.ts           # Sanitized JSONL flight recorder & summary aggregator
+│   │   ├── report.ts           # SARIF 2.1.0 & Markdown trace exporters
 │   │   └── proxy.ts            # Stdio child-process proxy with request correlation
 │   ├── cli/
 │   │   ├── format.ts           # TTY / NO_COLOR-aware terminal renderer
@@ -481,18 +489,24 @@ mcp-sentinel/
 ├── scripts/
 │   └── bench.mjs               # Reproducible latency & linear-time throughput benchmark
 ├── test/
+│   ├── cli.test.ts             # Compiled CLI integration tests (init, check, inspect)
+│   ├── custom-rules.test.ts    # Custom rules, ReDoS rejection, & SARIF/Markdown tests
 │   ├── framing.test.ts         # Chunked UTF-8 NDJSON & Content-Length framing tests
 │   ├── fuzz.test.ts            # Seeded chunk-boundary fuzz, path obfuscation & ReDoS tests
 │   ├── policy.test.ts          # Secrets, entropy, paths, destructive ops, injection tests
 │   ├── proxy.e2e.test.ts       # Real child-process stdio E2E & circuit-breaker tests
 │   └── fixtures/
 │       └── mock-mcp-server.mjs # Minimal stdio MCP server test harness
+├── .editorconfig
+├── .nvmrc
 ├── CHANGELOG.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
 ├── LICENSE
+├── Makefile
 ├── SECURITY.md
 ├── package.json
+├── sentinel.config.example.json
 ├── tsconfig.json
 └── tsconfig.test.json
 ```
@@ -520,8 +534,8 @@ Inspection overhead stays in the **low single-digit microseconds** per MCP tool 
 ## Roadmap
 
 - **v0.2 — Interactive Approval Gate:** Optional `--ask` mode prompting a human operator in the terminal (or secondary TTY) to allow/deny `medium`/`high` tool calls on the fly.
-- **v0.3 — Custom Declarative Rules:** Support user-defined regex/argument/domain rules inside `sentinel.config.json` with automatic ReDoS safety validation.
-- **v0.4 — Streamable HTTP & SSE Transport Proxy:** Extend inspection beyond stdio to remote HTTP/SSE MCP servers.
+- **v0.3 — Streamable HTTP & SSE Transport Proxy:** Extend inspection beyond stdio to remote HTTP/SSE MCP servers.
+- **v0.4 — Signed Policy Bundles:** Optional cryptographic verification of shared team `sentinel.config.json` files.
 
 ---
 
