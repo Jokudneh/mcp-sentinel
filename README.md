@@ -467,6 +467,7 @@ mcp-sentinel/
 │   ├── policy/
 │   │   ├── types.ts            # Config, severity ranking, and finding types
 │   │   ├── config.ts           # Defaults & runtime schema validation
+│   │   ├── circuit-breaker.ts  # Sliding-window canonicalized call-loop breaker
 │   │   ├── secrets.ts          # Linear-time patterns, Shannon entropy, deep redaction
 │   │   └── evaluator.ts        # Outbound/inbound policy engine & path boundary checks
 │   ├── runtime/
@@ -477,10 +478,13 @@ mcp-sentinel/
 │   │   └── commands.ts         # proxy, inspect, check, and init subcommands
 │   ├── cli.ts                  # Executable CLI entrypoint
 │   └── index.ts                # Public SDK exports
+├── scripts/
+│   └── bench.mjs               # Reproducible latency & linear-time throughput benchmark
 ├── test/
 │   ├── framing.test.ts         # Chunked UTF-8 NDJSON & Content-Length framing tests
+│   ├── fuzz.test.ts            # Seeded chunk-boundary fuzz, path obfuscation & ReDoS tests
 │   ├── policy.test.ts          # Secrets, entropy, paths, destructive ops, injection tests
-│   ├── proxy.e2e.test.ts       # Real child-process stdio E2E integration tests
+│   ├── proxy.e2e.test.ts       # Real child-process stdio E2E & circuit-breaker tests
 │   └── fixtures/
 │       └── mock-mcp-server.mjs # Minimal stdio MCP server test harness
 ├── CHANGELOG.md
@@ -495,12 +499,29 @@ mcp-sentinel/
 
 ---
 
+## Benchmarks
+
+Reproducible microbenchmarks (`npm run bench`, measured on Node `v24.19.0`, `win32/x64`):
+
+| Operation | p50 (µs) | p95 (µs) | p99 (µs) | Throughput |
+| --- | ---: | ---: | ---: | ---: |
+| `MessageFramer` (`ndjson`) | 0.90 | 1.30 | 2.30 | ~863,000 ops/s |
+| `MessageFramer` (`Content-Length`) | 1.30 | 1.50 | 2.60 | ~669,000 ops/s |
+| `evaluateToolCall` (clean) | 1.30 | 1.60 | 2.70 | ~659,000 ops/s |
+| `evaluateToolCall` (malicious) | 1.70 | 2.40 | 4.20 | ~492,000 ops/s |
+| `evaluateToolResponse` (clean) | 0.70 | 1.00 | 2.10 | ~1,101,000 ops/s |
+| `evaluateToolResponse` (injection) | 0.80 | 1.10 | 2.20 | ~982,000 ops/s |
+| `scanSecrets` (64 KB adversarial) | 366.90 | 398.00 | 520.80 | ~2,678 ops/s |
+
+Inspection overhead stays in the **low single-digit microseconds** per MCP tool call, and 64 KB adversarial payloads complete in **< 0.5 ms**, confirming linear-time regex behavior.
+
+---
+
 ## Roadmap
 
 - **v0.2 — Interactive Approval Gate:** Optional `--ask` mode prompting a human operator in the terminal (or secondary TTY) to allow/deny `medium`/`high` tool calls on the fly.
 - **v0.3 — Custom Declarative Rules:** Support user-defined regex/argument/domain rules inside `sentinel.config.json` with automatic ReDoS safety validation.
 - **v0.4 — Streamable HTTP & SSE Transport Proxy:** Extend inspection beyond stdio to remote HTTP/SSE MCP servers.
-- **v0.5 — Session Rate Limiting & Call-Loop Circuit Breaker:** Cap repeated identical `tools/call` bursts when an agent enters a runaway loop.
 
 ---
 
