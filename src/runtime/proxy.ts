@@ -227,7 +227,7 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
         const outMode = origin?.framingMode ?? frame.mode;
 
         if (origin?.toolName && 'result' in msg) {
-          const evalResult = evaluateToolResponse(msg.result, options.config);
+          const evalResult = evaluateToolResponse(msg.result, options.config, origin.toolName);
           let outboundMessage: unknown = msg;
           let redactedCount = 0;
 

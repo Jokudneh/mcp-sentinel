@@ -1,5 +1,11 @@
 export { CallLoopBreaker, fingerprintToolCall } from './policy/circuit-breaker.js';
 export {
+  assertSafeRegexPattern,
+  evaluateCustomRulesForLeaf,
+  matchCustomRuleValue,
+  UnsafeRegexError,
+} from './policy/custom-rules.js';
+export {
   ConfigError,
   DEFAULT_CONFIG,
   loadConfigFile,
@@ -18,6 +24,9 @@ export {
   SEVERITY_RANK,
   compareSeverity,
   maxSeverity,
+  type CustomRuleConfig,
+  type CustomRuleDirection,
+  type CustomRuleMatchType,
   type EnforcementMode,
   type EvaluationResult,
   type FindingCategory,
@@ -51,6 +60,7 @@ export {
   type McpToolCallParams,
 } from './protocol/jsonrpc.js';
 export { runStdioProxy, type McpProxyOptions } from './runtime/proxy.js';
+export { buildMarkdownReport, buildSarifReport, type SarifLog } from './runtime/report.js';
 export {
   JsonlTracer,
   readTraceFile,

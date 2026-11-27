@@ -1,4 +1,5 @@
 import { isAbsolute, normalize, relative, resolve } from 'node:path';
+import { evaluateCustomRulesForLeaf } from './custom-rules.js';
 import { scanSecrets } from './secrets.js';
 import {
   SEVERITY_RANK,
@@ -369,6 +370,19 @@ export function evaluateToolCall(
         });
       }
     }
+
+    if (config.customRules.length > 0) {
+      findings.push(
+        ...evaluateCustomRulesForLeaf(
+          config.customRules,
+          'request',
+          toolName,
+          leaf.path,
+          leaf.value,
+          matchesToolPattern,
+        ),
+      );
+    }
   }
 
   return decide(findings, config);
@@ -377,6 +391,7 @@ export function evaluateToolCall(
 export function evaluateToolResponse(
   resultPayload: unknown,
   config: SentinelConfig,
+  toolName?: string,
 ): EvaluationResult {
   const findings: RuleFinding[] = [];
   const leaves = extractStringLeaves(resultPayload, 'result');
@@ -410,6 +425,19 @@ export function evaluateToolResponse(
           matchPreview: secret.preview,
         });
       }
+    }
+
+    if (config.customRules.length > 0) {
+      findings.push(
+        ...evaluateCustomRulesForLeaf(
+          config.customRules,
+          'response',
+          toolName,
+          leaf.path,
+          leaf.value,
+          matchesToolPattern,
+        ),
+      );
     }
   }
 

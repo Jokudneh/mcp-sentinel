@@ -6,6 +6,7 @@ import { evaluateToolCall, evaluateToolResponse } from '../policy/evaluator.js';
 import { SEVERITY_RANK, type EnforcementMode, type SentinelConfig, type Severity } from '../policy/types.js';
 import { extractToolCallParams, isJsonObject, isJsonRpcNotification, isJsonRpcRequest } from '../protocol/jsonrpc.js';
 import { runStdioProxy } from '../runtime/proxy.js';
+import { buildMarkdownReport, buildSarifReport } from '../runtime/report.js';
 import { readTraceFile, summarizeTrace } from '../runtime/tracer.js';
 import { formatEvaluation, formatLiveEvent, formatTraceSummary } from './format.js';
 
@@ -39,7 +40,8 @@ Inspect options:
   --tool <name>              Filter events by tool name
   --severity <level>         Minimum severity (low|medium|high|critical)
   --only-findings            Include only events with policy findings
-  --json                     Output summary as JSON
+  --format <fmt>             Output format: text (default), json, markdown, sarif
+  --json                     Alias for --format json
 
 Check options:
   --config <path>            Load policy JSON file
@@ -63,6 +65,7 @@ function buildConfig(flags: {
         deniedTools: [...DEFAULT_CONFIG.deniedTools],
         allowedRoots: [...DEFAULT_CONFIG.allowedRoots],
         loopProtection: { ...DEFAULT_CONFIG.loopProtection },
+        customRules: [...DEFAULT_CONFIG.customRules],
       };
 
   if (flags.mode !== undefined) {
@@ -143,6 +146,7 @@ function runInspectCommand(argv: string[]): number {
       tool: { type: 'string' },
       severity: { type: 'string' },
       'only-findings': { type: 'boolean' },
+      format: { type: 'string', short: 'f' },
       json: { type: 'boolean' },
     },
     allowPositionals: true,
@@ -164,6 +168,12 @@ function runInspectCommand(argv: string[]): number {
     minRank = SEVERITY_RANK[values.severity as Severity];
   }
 
+  const format = values.json ? 'json' : (values.format ?? 'text');
+  if (format !== 'text' && format !== 'json' && format !== 'markdown' && format !== 'sarif') {
+    process.stderr.write(`Error: Invalid --format "${format}" (expected text, json, markdown, or sarif)\n`);
+    return 2;
+  }
+
   const { events, skippedLines } = readTraceFile(tracePath);
   const filtered = events.filter((event) => {
     if (values.tool && event.toolName !== values.tool) return false;
@@ -175,8 +185,16 @@ function runInspectCommand(argv: string[]): number {
   });
 
   const summary = summarizeTrace(filtered);
-  if (values.json) {
+  if (format === 'json') {
     process.stdout.write(`${JSON.stringify({ file: tracePath, skippedLines, summary }, null, 2)}\n`);
+    return 0;
+  }
+  if (format === 'sarif') {
+    process.stdout.write(`${JSON.stringify(buildSarifReport(filtered, VERSION), null, 2)}\n`);
+    return 0;
+  }
+  if (format === 'markdown') {
+    process.stdout.write(buildMarkdownReport(tracePath, summary, filtered));
     return 0;
   }
 

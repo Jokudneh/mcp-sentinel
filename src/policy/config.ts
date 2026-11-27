@@ -1,6 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import type { EnforcementMode, SentinelConfig, Severity } from './types.js';
+import { assertSafeRegexPattern, UnsafeRegexError } from './custom-rules.js';
+import type {
+  CustomRuleConfig,
+  CustomRuleDirection,
+  CustomRuleMatchType,
+  EnforcementMode,
+  SentinelConfig,
+  Severity,
+} from './types.js';
 
 export class ConfigError extends Error {
   constructor(message: string) {
@@ -25,10 +33,13 @@ export const DEFAULT_CONFIG: Readonly<SentinelConfig> = {
     maxRepeatedCalls: 8,
     windowMs: 30_000,
   },
+  customRules: [],
 };
 
 const VALID_MODES = new Set<EnforcementMode>(['enforce', 'audit']);
 const VALID_SEVERITIES = new Set<Severity>(['low', 'medium', 'high', 'critical']);
+const VALID_DIRECTIONS = new Set<CustomRuleDirection>(['request', 'response', 'both']);
+const VALID_MATCH_TYPES = new Set<CustomRuleMatchType>(['contains', 'prefix', 'regex']);
 
 function assertStringArray(value: unknown, field: string): string[] {
   if (!Array.isArray(value) || !value.every((item) => typeof item === 'string')) {
@@ -56,6 +67,7 @@ export function validateConfig(raw: unknown): SentinelConfig {
     deniedTools: [...DEFAULT_CONFIG.deniedTools],
     allowedRoots: [...DEFAULT_CONFIG.allowedRoots],
     loopProtection: { ...DEFAULT_CONFIG.loopProtection },
+    customRules: [...DEFAULT_CONFIG.customRules],
   };
 
   if ('mode' in input) {
@@ -130,6 +142,66 @@ export function validateConfig(raw: unknown): SentinelConfig {
       }
       config.loopProtection.windowMs = val;
     }
+  }
+
+  if ('customRules' in input) {
+    const rawRules = input['customRules'];
+    if (!Array.isArray(rawRules)) {
+      throw new ConfigError('Config field "customRules" must be an array');
+    }
+    const parsedRules: CustomRuleConfig[] = [];
+    for (let i = 0; i < rawRules.length; i += 1) {
+      const entry = rawRules[i];
+      if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+        throw new ConfigError(`customRules[${i}] must be an object`);
+      }
+      const r = entry as Record<string, unknown>;
+      if (typeof r['id'] !== 'string' || r['id'].trim().length === 0) {
+        throw new ConfigError(`customRules[${i}].id must be a non-empty string`);
+      }
+      if (typeof r['direction'] !== 'string' || !VALID_DIRECTIONS.has(r['direction'] as CustomRuleDirection)) {
+        throw new ConfigError(`customRules[${i}].direction must be "request", "response", or "both"`);
+      }
+      if (typeof r['severity'] !== 'string' || !VALID_SEVERITIES.has(r['severity'] as Severity)) {
+        throw new ConfigError(`customRules[${i}].severity must be "low", "medium", "high", or "critical"`);
+      }
+      if (typeof r['summary'] !== 'string' || r['summary'].trim().length === 0) {
+        throw new ConfigError(`customRules[${i}].summary must be a non-empty string`);
+      }
+      if (typeof r['match'] !== 'string' || !VALID_MATCH_TYPES.has(r['match'] as CustomRuleMatchType)) {
+        throw new ConfigError(`customRules[${i}].match must be "contains", "prefix", or "regex"`);
+      }
+      if (typeof r['pattern'] !== 'string' || r['pattern'].length === 0) {
+        throw new ConfigError(`customRules[${i}].pattern must be a non-empty string`);
+      }
+      if (r['match'] === 'regex') {
+        try {
+          assertSafeRegexPattern(r['pattern']);
+        } catch (err) {
+          const detail = err instanceof UnsafeRegexError ? err.message : String(err);
+          throw new ConfigError(`customRules[${i}].pattern rejected: ${detail}`);
+        }
+      }
+      const rule: CustomRuleConfig = {
+        id: r['id'].trim(),
+        direction: r['direction'] as CustomRuleDirection,
+        severity: r['severity'] as Severity,
+        summary: r['summary'].trim(),
+        match: r['match'] as CustomRuleMatchType,
+        pattern: r['pattern'],
+      };
+      if ('toolPattern' in r) {
+        if (typeof r['toolPattern'] !== 'string' || r['toolPattern'].trim().length === 0) {
+          throw new ConfigError(`customRules[${i}].toolPattern must be a non-empty string`);
+        }
+        rule.toolPattern = r['toolPattern'].trim();
+      }
+      if ('caseSensitive' in r) {
+        rule.caseSensitive = assertBoolean(r['caseSensitive'], `customRules[${i}].caseSensitive`);
+      }
+      parsedRules.push(rule);
+    }
+    config.customRules = parsedRules;
   }
 
   return config;

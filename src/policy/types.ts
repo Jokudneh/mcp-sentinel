@@ -8,7 +8,22 @@ export type FindingCategory =
   | 'destructive_command'
   | 'path_violation'
   | 'prompt_injection'
-  | 'rate_limit';
+  | 'rate_limit'
+  | 'custom_rule';
+
+export type CustomRuleDirection = 'request' | 'response' | 'both';
+export type CustomRuleMatchType = 'contains' | 'prefix' | 'regex';
+
+export interface CustomRuleConfig {
+  id: string;
+  direction: CustomRuleDirection;
+  severity: Severity;
+  summary: string;
+  match: CustomRuleMatchType;
+  pattern: string;
+  toolPattern?: string;
+  caseSensitive?: boolean;
+}
 
 export type PolicyDecision = 'allow' | 'warn' | 'block';
 
@@ -45,6 +60,7 @@ export interface SentinelConfig {
   detectPromptInjection: boolean;
   maxPayloadBytes: number;
   loopProtection: LoopProtectionConfig;
+  customRules: CustomRuleConfig[];
 }
 
 export const SEVERITY_RANK: Readonly<Record<Severity, number>> = {
