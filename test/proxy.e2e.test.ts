@@ -186,3 +186,51 @@ test('runStdioProxy redacts secrets in tool responses when severity is below blo
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test('runStdioProxy trips CallLoopBreaker when an agent repeats identical tool calls', async () => {
+  const clientIn = new PassThrough();
+  const clientOut = new PassThrough();
+  const stderrOut = new PassThrough();
+
+  const proxyPromise = runStdioProxy({
+    command: process.execPath,
+    args: [MOCK_SERVER_PATH],
+    config: validateConfig({
+      mode: 'enforce',
+      loopProtection: { enabled: true, maxRepeatedCalls: 3, windowMs: 30_000 },
+    }),
+    stdin: clientIn,
+    stdout: clientOut,
+    stderr: stderrOut,
+    quiet: true,
+  });
+
+  const responsesPromise = waitForResponses(clientOut, 4);
+
+  for (let id = 1; id <= 4; id += 1) {
+    clientIn.write(
+      encodeFrame(
+        {
+          jsonrpc: '2.0',
+          id,
+          method: 'tools/call',
+          params: { name: 'echo', arguments: { text: 'stuck-in-loop' } },
+        },
+        'ndjson',
+      ),
+    );
+  }
+
+  const responses = (await responsesPromise) as Array<Record<string, unknown>>;
+  clientIn.end();
+  await proxyPromise;
+
+  const byId = new Map(responses.map((r) => [r['id'], r]));
+  assert.ok('result' in (byId.get(1) ?? {}));
+  assert.ok('result' in (byId.get(2) ?? {}));
+  assert.ok('result' in (byId.get(3) ?? {}));
+
+  const fourth = byId.get(4) as { error?: { code?: number; data?: { findings?: Array<{ ruleId: string }> } } } | undefined;
+  assert.equal(fourth?.error?.code, SENTINEL_BLOCKED_ERROR_CODE);
+  assert.equal(fourth?.error?.data?.findings?.[0]?.ruleId, 'runtime.call_loop_detected');
+});

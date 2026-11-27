@@ -305,8 +305,10 @@ mcp-sentinel init [config-path] [--force]
 | **Path Security** | `path.cloud_credentials` | `critical` | `.aws/credentials`, `.kube/config`, `.docker/config.json`, `.npmrc`, `.pypirc`, `.netrc` |
 | **Path Security** | `path.dotenv_file` | `high` | `.env` and `.env.*` secret files |
 | **Path Security** | `path.system_auth_file` | `critical` | `/etc/shadow`, `/etc/gshadow`, `/etc/sudoers` |
-| **Path Security** | `path.traversal` | `high` | Parent-directory traversal segments (`..`) |
+| **Path Security** | `path.null_byte` | `critical` | Null-byte (`\0`) injection inside file path arguments |
+| **Path Security** | `path.traversal` | `high` | Parent-directory traversal segments (`..`, including URL-encoded `%2e%2e%2f` and mixed slashes) |
 | **Path Security** | `path.outside_allowed_roots` | `high` | Resolved path escapes all configured `allowedRoots` |
+| **Rate / Loop Guard** | `runtime.call_loop_detected` | `high` | Identical `tools/call` (canonicalized arguments) repeated beyond `loopProtection.maxRepeatedCalls` within `windowMs` |
 | **Secret Leaks** | `secret.private_key_pem` | `critical` / `high` | PEM private key blocks (`-----BEGIN ... PRIVATE KEY-----`) |
 | **Secret Leaks** | `secret.aws_access_key` | `critical` / `high` | AWS access key IDs (`AKIA...`, `ASIA...`) |
 | **Secret Leaks** | `secret.github_token` | `critical` / `high` | GitHub PATs (`ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`) |
@@ -339,7 +341,12 @@ Generated via `mcp-sentinel init` (`sentinel.config.json`):
   "detectSecrets": true,
   "detectDestructiveCommands": true,
   "detectPromptInjection": true,
-  "maxPayloadBytes": 4194304
+  "maxPayloadBytes": 4194304,
+  "loopProtection": {
+    "enabled": true,
+    "maxRepeatedCalls": 8,
+    "windowMs": 30000
+  }
 }
 ```
 
@@ -355,6 +362,7 @@ Generated via `mcp-sentinel init` (`sentinel.config.json`):
 | `detectDestructiveCommands` | `boolean` | `true` | Enable destructive shell & SQL rule checks |
 | `detectPromptInjection` | `boolean` | `true` | Enable indirect prompt-injection inspection on tool responses |
 | `maxPayloadBytes` | `number` | `4194304` | Maximum single frame size in bytes (`1024`–`67108864`) |
+| `loopProtection` | `{ enabled, maxRepeatedCalls, windowMs }` | `{ true, 8, 30000 }` | Sliding-window circuit breaker stopping runaway identical tool-call loops |
 
 > CLI flags (`--mode`, `--allow-root`, `--allow-tool`, `--deny-tool`) merge on top of `--config` so you can share a base team policy file and override per-project roots on the command line.
 
