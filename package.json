@@ -1,6 +1,6 @@
 {
   "name": "mcp-sentinel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Zero-dependency stdio firewall and flight recorder for Model Context Protocol (MCP) servers.",
   "type": "module",
   "license": "MIT",

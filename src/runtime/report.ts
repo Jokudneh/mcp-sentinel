@@ -55,7 +55,7 @@ function severityToSarifLevel(severity: Severity): 'error' | 'warning' | 'note' 
 
 export function buildSarifReport(
   events: readonly TraceEvent[],
-  version = '0.1.0',
+  version = '0.2.0',
 ): SarifLog {
   const ruleMap = new Map<
     string,

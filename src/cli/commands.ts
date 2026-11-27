@@ -10,7 +10,7 @@ import { buildMarkdownReport, buildSarifReport } from '../runtime/report.js';
 import { readTraceFile, summarizeTrace } from '../runtime/tracer.js';
 import { formatEvaluation, formatLiveEvent, formatTraceSummary } from './format.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 const HELP_TEXT = `mcp-sentinel v${VERSION}
 Zero-dependency stdio firewall and flight recorder for MCP servers.

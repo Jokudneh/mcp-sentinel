@@ -533,9 +533,11 @@ Inspection overhead stays in the **low single-digit microseconds** per MCP tool 
 
 ## Roadmap
 
-- **v0.2 — Interactive Approval Gate:** Optional `--ask` mode prompting a human operator in the terminal (or secondary TTY) to allow/deny `medium`/`high` tool calls on the fly.
-- **v0.3 — Streamable HTTP & SSE Transport Proxy:** Extend inspection beyond stdio to remote HTTP/SSE MCP servers.
-- **v0.4 — Signed Policy Bundles:** Optional cryptographic verification of shared team `sentinel.config.json` files.
+- [x] **v0.1** — Zero-dependency stdio firewall, dual NDJSON/Content-Length framer, secret redactor, JSONL flight recorder.
+- [x] **v0.2** — Call-loop circuit breaker, declarative `customRules` with ReDoS guard, SARIF 2.1.0 / Markdown export, seeded fuzz suite, and microbenchmarks.
+- [ ] **v0.3** — Interactive terminal approval gate (`--ask`) allowing human allow/deny prompts for `medium`/`high` tool calls.
+- [ ] **v0.4** — Streamable HTTP & SSE transport proxy for remote MCP servers.
+- [ ] **v0.5** — Cryptographically signed team policy bundles (`sentinel.config.json`).
 
 ---
 

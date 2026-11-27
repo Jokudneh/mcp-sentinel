@@ -42,7 +42,7 @@
     <rect x="0" y="0" width="60" height="24" rx="12" fill="#10B981" fill-opacity="0.12" stroke="#10B981" stroke-opacity="0.45" stroke-width="1" />
     <text x="30" y="16" text-anchor="middle" fill="#34D399"
           font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
-          font-size="12" font-weight="600">v0.1.0</text>
+          font-size="12" font-weight="600">v0.2.0</text>
   </g>
 
   <text x="168" y="148" fill="#8B949E"
