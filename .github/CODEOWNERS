@@ -1,0 +1,7 @@
+# Default maintainer for all files
+* @Jokudneh
+
+# Security-sensitive policy rules and CI workflows
+/src/policy/ @Jokudneh
+/.github/ @Jokudneh
+/SECURITY.md @Jokudneh
