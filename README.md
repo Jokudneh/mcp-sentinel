@@ -3,18 +3,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/ci.yml">
-    <img src="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/ci.yml/badge.svg" alt="CI" />
-  </a>
-  <a href="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/codeql.yml">
-    <img src="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/codeql.yml/badge.svg" alt="CodeQL" />
-  </a>
+  <a href="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/ci.yml"><img src="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/codeql.yml"><img src="https://github.com/Jokudneh/mcp-sentinel/actions/workflows/codeql.yml/badge.svg" alt="CodeQL" /></a>
   <img src="https://img.shields.io/badge/node-%3E%3D20.0.0-10B981?style=flat&logo=node.js&logoColor=white" alt="Node >= 20" />
   <img src="https://img.shields.io/badge/runtime_deps-0-06B6D4?style=flat" alt="Zero Runtime Dependencies" />
   <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript Strict" />
-  <a href="./LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-64748B?style=flat" alt="MIT License" />
-  </a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-64748B?style=flat" alt="MIT License" /></a>
 </p>
 
 <p align="center">

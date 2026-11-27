@@ -1,14 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="mcp-sentinel logo">
   <defs>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10B981" />
-      <stop offset="100%" stop-color="#06B6D4" />
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="shieldStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#22D3EE" />
+    </linearGradient>
+    <linearGradient id="shieldFill" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="120" height="120" rx="24" fill="#0D1117" stroke="#30363D" stroke-width="2" />
-  <path d="M64 24 L98 37 V65 C98 85 83 99.5 64 106 C45 99.5 30 85 30 65 V37 Z"
-        fill="#161B22" stroke="url(#accent)" stroke-width="3.2" stroke-linejoin="round" />
-  <path d="M49 56 L59 64 L49 72" fill="none" stroke="#F0F6FC" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />
-  <line x1="65" y1="72" x2="79" y2="72" stroke="#10B981" stroke-width="3.4" stroke-linecap="round" />
-  <circle cx="99" cy="29" r="6" fill="#10B981" />
+
+  <rect x="4" y="4" width="120" height="120" rx="26" fill="url(#bgGrad)" stroke="#334155" stroke-width="2.5" />
+  <!-- Shield emblem -->
+  <path d="M64 20 L102 34 V65 C102 88.5 85.5 104 64 111 C42.5 104 26 88.5 26 65 V34 Z"
+        fill="url(#shieldFill)" stroke="url(#shieldStroke)" stroke-width="4" stroke-linejoin="round" />
+  <!-- Inner subtle rim -->
+  <path d="M64 29 L94 40 V64 C94 82.5 81 95 64 101 C47 95 34 82.5 34 64 V40 Z"
+        fill="none" stroke="#34D399" stroke-opacity="0.22" stroke-width="1.5" stroke-linejoin="round" />
+  <!-- Bold terminal prompt mark -->
+  <path d="M45 54 L59 64 L45 74" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+  <line x1="65" y1="74" x2="83" y2="74" stroke="#34D399" stroke-width="5" stroke-linecap="round" />
 </svg>
