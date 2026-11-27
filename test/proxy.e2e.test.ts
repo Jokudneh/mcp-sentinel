@@ -234,3 +234,37 @@ test('runStdioProxy trips CallLoopBreaker when an agent repeats identical tool c
   assert.equal(fourth?.error?.code, SENTINEL_BLOCKED_ERROR_CODE);
   assert.equal(fourth?.error?.data?.findings?.[0]?.ruleId, 'runtime.call_loop_detected');
 });
+
+test('runStdioProxy answers the oldest in-flight request instead of dropping it when the table overflows', async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'mcp-sentinel-overflow-'));
+  try {
+    const clientIn = new PassThrough();
+    const clientOut = new PassThrough();
+    const stderrOut = new PassThrough();
+
+    const proxyPromise = runStdioProxy({
+      command: process.execPath,
+      args: [MOCK_SERVER_PATH],
+      config: validateConfig({ mode: 'enforce', blockOnSeverity: 'high' }),
+      stdin: clientIn,
+      stdout: clientOut,
+      stderr: stderrOut,
+      quiet: true,
+      maxPendingRequests: 1,
+    });
+
+    const responsesPromise = waitForResponses(clientOut, 2);
+    clientIn.write(encodeFrame({ jsonrpc: '2.0', id: 101, method: 'initialize', params: {} }, 'ndjson'));
+    clientIn.write(encodeFrame({ jsonrpc: '2.0', id: 102, method: 'initialize', params: {} }, 'ndjson'));
+
+    const responses = (await responsesPromise) as Array<{ id?: number; error?: { message?: string } }>;
+    clientIn.end();
+    await proxyPromise;
+
+    const evicted = responses.find((r) => r.id === 101);
+    assert.ok(evicted, 'the evicted request must still receive a response');
+    assert.match(String(evicted.error?.message), /Dropped by mcp-sentinel/);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});

@@ -8,6 +8,7 @@ import { SEVERITY_RANK, maxSeverity, type SentinelConfig } from '../policy/types
 import { encodeFrame, MessageFramer, type FramingMode } from '../protocol/framing.js';
 import {
   createBlockedErrorResponse,
+  SENTINEL_BLOCKED_ERROR_CODE,
   extractToolCallParams,
   isJsonRpcNotification,
   isJsonRpcRequest,
@@ -29,9 +30,12 @@ export interface McpProxyOptions {
   quiet?: boolean;
   onEvent?: (event: TraceEvent) => void;
   formatTelemetry?: (event: TraceEvent) => string | null;
+  /** Upper bound on in-flight requests the proxy will track. Defaults to 2,048. */
+  maxPendingRequests?: number;
 }
 
 interface PendingRequest {
+  id: JsonRpcId;
   method: string;
   toolName?: string;
   startedAt: number;
@@ -57,6 +61,7 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
   const serverFramer = new MessageFramer(options.config.maxPayloadBytes);
   const loopBreaker = new CallLoopBreaker(options.config.loopProtection);
   const pending = new Map<string, PendingRequest>();
+  const maxPendingRequests = options.maxPendingRequests ?? MAX_PENDING_REQUESTS;
 
   const child: ChildProcess = spawn(options.command, options.args, {
     cwd: options.cwd,
@@ -86,13 +91,37 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
     }
   };
 
+  // The table is bounded, so an overflow has to be visible. Dropping the oldest
+  // entry silently left that request forwarded-but-unanswerable: the server's
+  // response arrived with no pending entry and the caller waited forever.
+  // Evict it and answer it with a typed error instead.
+  const evictOldestPending = (): void => {
+    const oldest = pending.keys().next().value;
+    if (oldest === undefined) return;
+    const entry = pending.get(oldest);
+    pending.delete(oldest);
+    if (!entry) return;
+    clientOut.write(
+      encodeFrame(
+        {
+          jsonrpc: '2.0',
+          id: entry.id,
+          error: {
+            code: SENTINEL_BLOCKED_ERROR_CODE,
+            message: `Dropped by mcp-sentinel: more than ${maxPendingRequests} requests were in flight`,
+            data: { method: entry.method, limit: maxPendingRequests },
+          },
+        },
+        entry.framingMode,
+      ),
+    );
+  };
+
   const trackPending = (key: string, entry: PendingRequest): void => {
     pending.delete(key);
     pending.set(key, entry);
-    while (pending.size > MAX_PENDING_REQUESTS) {
-      const oldest = pending.keys().next().value;
-      if (oldest === undefined) break;
-      pending.delete(oldest);
+    while (pending.size > maxPendingRequests) {
+      evictOldestPending();
     }
   };
 
@@ -177,6 +206,7 @@ export async function runStdioProxy(options: McpProxyOptions): Promise<number> {
 
         if (key !== null) {
           const pendingEntry: PendingRequest = {
+            id: isReq ? msg.id : null,
             method: msg.method,
             startedAt: performance.now(),
             framingMode: frame.mode,
