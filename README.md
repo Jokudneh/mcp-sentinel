@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/banner.jpg" alt="MCP Sentinel — Zero-Dependency Stdio Firewall & Flight Recorder for MCP" width="100%" />
+  <img src="./assets/banner.svg" alt="mcp-sentinel — Zero-dependency stdio firewall & JSONL flight recorder for MCP servers" width="100%" />
 </p>
 
 <p align="center">
@@ -448,7 +448,7 @@ mcp-sentinel/
 │   └── workflows/
 │       └── ci.yml              # Matrix CI across Node 20, 22, and 24
 ├── assets/
-│   └── banner.jpg              # Project hero banner
+│   └── banner.svg              # Compact vector hero banner
 ├── src/
 │   ├── protocol/
 │   │   ├── jsonrpc.ts          # Strict JSON-RPC 2.0 & MCP types + error builders

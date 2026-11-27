@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-label="mcp-sentinel — Zero-dependency stdio firewall and JSONL flight recorder for MCP servers">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0D1117" />
+      <stop offset="100%" stop-color="#0A0E14" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#30363D" opacity="0.45" />
+    </pattern>
+  </defs>
+
+  <!-- Outer card -->
+  <rect x="1" y="1" width="1198" height="238" rx="14" fill="url(#bg)" stroke="#21262D" stroke-width="1.5" />
+  <rect x="2" y="2" width="1196" height="236" rx="13" fill="url(#grid)" />
+
+  <!-- Subtle top accent hairline -->
+  <rect x="48" y="1" width="160" height="2" rx="1" fill="url(#accent)" />
+
+  <!-- Geometric vector emblem -->
+  <g transform="translate(52, 76)">
+    <rect x="0" y="0" width="88" height="88" rx="16" fill="#161B22" stroke="#30363D" stroke-width="1.5" />
+    <!-- Minimal shield outline -->
+    <path d="M44 18 L66 26 V45 C66 58 56.5 67.5 44 72 C31.5 67.5 22 58 22 45 V26 Z"
+          fill="#0D1117" stroke="url(#accent)" stroke-width="2.2" stroke-linejoin="round" />
+    <!-- Bidirectional stdio intercept chevrons -->
+    <path d="M35 39 L41 44 L35 49" fill="none" stroke="#F0F6FC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="45" y1="49" x2="54" y2="49" stroke="#10B981" stroke-width="2.2" stroke-linecap="round" />
+    <circle cx="67" cy="21" r="4" fill="#10B981" />
+  </g>
+
+  <!-- Brand title & tagline -->
+  <text x="168" y="114" fill="#F0F6FC"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="40" font-weight="700" letter-spacing="-0.8">mcp-sentinel</text>
+
+  <!-- Version pill -->
+  <g transform="translate(456, 89)">
+    <rect x="0" y="0" width="60" height="24" rx="12" fill="#10B981" fill-opacity="0.12" stroke="#10B981" stroke-opacity="0.45" stroke-width="1" />
+    <text x="30" y="16" text-anchor="middle" fill="#34D399"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12" font-weight="600">v0.1.0</text>
+  </g>
+
+  <text x="168" y="148" fill="#8B949E"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" font-weight="400">Zero-dependency stdio firewall &amp; JSONL flight recorder</text>
+  <text x="168" y="172" fill="#8B949E"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+        font-size="16" font-weight="400">for Model Context Protocol (MCP) servers.</text>
+
+  <!-- Compact live telemetry card -->
+  <g transform="translate(716, 40)">
+    <rect x="0" y="0" width="432" height="160" rx="10" fill="#010409" stroke="#30363D" stroke-width="1.2" />
+    <!-- Terminal titlebar -->
+    <path d="M1 10 C1 5 5 1 10 1 H422 C427 1 431 5 431 10 V30 H1 Z" fill="#161B22" />
+    <line x1="1" y1="30" x2="431" y2="30" stroke="#21262D" stroke-width="1" />
+    <circle cx="16" cy="15.5" r="3.5" fill="#484F58" />
+    <circle cx="29" cy="15.5" r="3.5" fill="#484F58" />
+    <circle cx="42" cy="15.5" r="3.5" fill="#484F58" />
+    <text x="416" y="19" text-anchor="end" fill="#8B949E"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="11">stdio proxy · enforce</text>
+
+    <!-- Row 1: ALLOW -->
+    <rect x="16" y="45" width="48" height="19" rx="4" fill="#238636" fill-opacity="0.22" />
+    <text x="40" y="58.5" text-anchor="middle" fill="#3FB950"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="11" font-weight="700">ALLOW</text>
+    <text x="76" y="58.5" fill="#E6EDF3"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12.5">-&gt; echo</text>
+    <text x="416" y="58.5" text-anchor="end" fill="#8B949E"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12">22.7ms</text>
+
+    <!-- Row 2: BLOCK outbound -->
+    <rect x="16" y="74" width="48" height="19" rx="4" fill="#DA3633" fill-opacity="0.22" />
+    <text x="40" y="87.5" text-anchor="middle" fill="#F85149"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="11" font-weight="700">BLOCK</text>
+    <text x="76" y="87.5" fill="#E6EDF3"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12.5">-&gt; run_shell</text>
+    <text x="416" y="87.5" text-anchor="end" fill="#F85149"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12">exec.rm_rf</text>
+
+    <!-- Row 3: BLOCK inbound -->
+    <rect x="16" y="103" width="48" height="19" rx="4" fill="#DA3633" fill-opacity="0.22" />
+    <text x="40" y="116.5" text-anchor="middle" fill="#F85149"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="11" font-weight="700">BLOCK</text>
+    <text x="76" y="116.5" fill="#E6EDF3"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12.5">&lt;- read_doc</text>
+    <text x="416" y="116.5" text-anchor="end" fill="#D29922"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="12">prompt_injection</text>
+
+    <!-- Footer bar -->
+    <line x1="16" y1="134" x2="416" y2="134" stroke="#21262D" stroke-width="1" />
+    <text x="16" y="150" fill="#6E7681"
+          font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+          font-size="10.5">runtime deps: 0  ·  wire: ndjson / lsp  ·  code: -32001</text>
+  </g>
+</svg>
