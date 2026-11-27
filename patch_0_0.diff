@@ -1,0 +1,39 @@
+--- a/src/protocol/framing.ts
++++ b/src/protocol/framing.ts
+@@ -40,9 +40,22 @@ function parseContentLength(headerBlock: string): number | null {
+   return null;
+ }
+ 
+-function startsWithContentLengthHeader(buffer: Buffer): boolean {
++const HEADER_PREFIXES = ['content-length:', 'content-type:'] as const;
++
++function classifyHeaderPrefix(buffer: Buffer): 'header' | 'partial' | 'none' {
+   const head = buffer.subarray(0, 32).toString('ascii').toLowerCase();
+-  return head.startsWith('content-length:');
++  for (const prefix of HEADER_PREFIXES) {
++    if (head.startsWith(prefix)) {
++      return 'header';
++    }
++    if (head.length < prefix.length && prefix.startsWith(head)) {
++      return 'partial';
++    }
++  }
++  return 'none';
+ }
+ 
+ export class MessageFramer {
+@@ -80,7 +93,12 @@ export class MessageFramer {
+         if (this.buffer.length === 0) break;
+       }
+ 
+-      if (startsWithContentLengthHeader(this.buffer)) {
++      const headerKind = classifyHeaderPrefix(this.buffer);
++      if (headerKind === 'partial') {
++        // Wait for remaining header prefix bytes before choosing framing mode.
++        break;
++      }
++
++      if (headerKind === 'header') {
+         const crlfIdx = this.buffer.indexOf(HEADER_SEPARATOR);
+         const lfIdx = crlfIdx === -1 ? this.buffer.indexOf(LF_HEADER_SEPARATOR) : -1;
+         const sepIdx = crlfIdx !== -1 ? crlfIdx : lfIdx;
