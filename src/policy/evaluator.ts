@@ -29,13 +29,13 @@ const DESTRUCTIVE_COMMAND_RULES: readonly PatternRule[] = [
     ruleId: 'exec.rm_rf',
     severity: 'critical',
     summary: 'Recursive forced file deletion (rm -rf)',
-    regex: /\brm\s+-(?:[a-zA-Z]*r[a-zA-Z]*f|[a-zA-Z]*f[a-zA-Z]*r)\b/i,
+    regex: /\brm\s+(?:-(?:[a-zA-Z]{0,6}r[a-zA-Z]{0,6}f|[a-zA-Z]{0,6}f[a-zA-Z]{0,6}r)\b|(?:-[a-zA-Z]{0,4}r|--recursive)\b[^\n]{0,64}(?:-[a-zA-Z]{0,4}f|--force)\b|(?:-[a-zA-Z]{0,4}f|--force)\b[^\n]{0,64}(?:-[a-zA-Z]{0,4}r|--recursive)\b)/i,
   },
   {
     ruleId: 'exec.windows_destructive_del',
     severity: 'critical',
     summary: 'Recursive forced deletion (Remove-Item -Recurse -Force or rd /s /q)',
-    regex: /\b(?:Remove-Item\b[^\n]{0,120}-Recurse[^\n]{0,80}-Force|rd\s+\/s\s+\/q|del\s+\/f\s+\/s\s+\/q)\b/i,
+    regex: /\b(?:Remove-Item\b[^\n]{0,120}(?:-Recurse[^\n]{0,80}-Force|-Force[^\n]{0,80}-Recurse)|rd\s+\/s\s+\/q|del\s+\/f\s+\/s\s+\/q)\b/i,
   },
   {
     ruleId: 'exec.pipe_to_shell',
@@ -86,7 +86,7 @@ const SENSITIVE_PATH_RULES: readonly PatternRule[] = [
     ruleId: 'path.system_auth_file',
     severity: 'critical',
     summary: 'Access to OS password/shadow database',
-    regex: /^\/etc\/(?:shadow|gshadow|sudoers)\b/i,
+    regex: /(?:^|[\s"'=:])\/etc\/(?:shadow|gshadow|sudoers)\b/i,
   },
 ];
 
@@ -223,7 +223,8 @@ function looksLikePathValue(leaf: StringLeaf): boolean {
     val.startsWith('../') ||
     val.startsWith('..\\') ||
     /^[a-zA-Z]:[\\/]/.test(val) ||
-    /(?:^|[\\/])\.(?:env|ssh|aws|kube|npmrc)\b/i.test(val) ||
+    /(?:^|[\\/\s"'=:])\.(?:env|ssh|aws|kube|npmrc)\b/i.test(val) ||
+    /(?:^|[\s"'=:])\/etc\/(?:shadow|gshadow|sudoers)\b/i.test(val) ||
     /%2e%2e(?:%2f|%5c|[\\/])/i.test(val)
   );
 }
